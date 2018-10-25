@@ -15,7 +15,7 @@ namespace AsyncExample
         {
             ThreadsRequested += sleepSeconds;
             Thread.Sleep(sleepSeconds * 1000);
-            ThreadsRun += sleepSeconds;
+            ThreadsRun += 1;
             return sleepSeconds;
         }
         public int StartSleepSequential(int sleepSeconds, int threads)
@@ -55,7 +55,6 @@ namespace AsyncExample
             {
                 x += await Task.Run(() => StartSleep(sleepSeconds));
             }
-            System.Console.WriteLine(x);
         }
     }
 }
