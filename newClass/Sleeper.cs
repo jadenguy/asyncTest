@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace AsyncExample
 {
-    public class Example
+    public class Sleeper
     {
         int threadsRun;
         int threadsRequested;
@@ -22,7 +22,7 @@ namespace AsyncExample
         public int ThreadsRequested { get => threadsRequested; private set => threadsRequested = value; }
         public Stopwatch RunTimer { get => runTimer; private set => runTimer = value; }
         public bool Running { get { return ((ThreadsRequested - ThreadsRun) != 0); } }
-        public Example()
+        public Sleeper()
         {
             RunTimer = new Stopwatch();
         }
