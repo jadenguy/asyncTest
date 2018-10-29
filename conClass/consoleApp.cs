@@ -7,7 +7,7 @@ namespace AsyncExample
         static void Main()
         {
             LogThis("Starting");
-            var n = new AsyncExample.Example();
+            var n = new AsyncExample.Sleeper();
             n.ThreadSleepAsync(10,10).Wait();
             LogThis("Done");
         }
