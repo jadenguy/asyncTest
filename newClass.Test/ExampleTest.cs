@@ -1,141 +1,117 @@
-﻿using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace AsyncExample.Tests
 {
     public class ExampleTest
     {
         [TestCase(0)]
-        [TestCase(1)]
         [TestCase(5)]
-        public void StartSleepTest(int sleepSeconds)
+        public void StartSleepTest(double sleepSeconds)
         {
             //-- Arrange
             var example = new Example();
-            var stopwatch = new Stopwatch();
-            var expectedSeconds = sleepSeconds;
+
+            var expectedMilliseconds = sleepSeconds * 1000;
+            var expectedRequest = 1;
             var expectedRun = 1;
             var expectedTotal = sleepSeconds;
-            //-- Act
-            stopwatch.Start();
-            var actualTotal = example.StartSleep(sleepSeconds);
-            stopwatch.Stop();
-            var actualSeconds = stopwatch.Elapsed.Seconds;
-            var actualRun = example.ThreadsRun;
-            //-- Assert
-            Assert.AreEqual(expectedSeconds, actualSeconds);
-            Assert.AreEqual(expectedRun, actualRun);
-            Assert.AreEqual(expectedTotal, actualTotal);
 
+            //-- Act
+            example.RunTimer.Start();
+            var actualTotal = example.StartSleep(sleepSeconds).Result;
+            example.RunTimer.Stop();
+
+            var actualMilliseconds = example.RunTimer.Elapsed.TotalMilliseconds;
+            var actualRequest = example.ThreadsRequested;
+            var actualRun = example.ThreadsRun;
+
+            //-- Assert
+            Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
+            Assert.AreEqual(expectedTotal, actualTotal);
+            Assert.AreEqual(expectedRun, actualRun);
+            Assert.AreEqual(expectedRequest, actualRequest);
         }
-        [TestCase(1, 1)]
-        [TestCase(1, 2)]
-        [TestCase(2, 2)]
-        public void StartSleepSequentialTest(int sleepSeconds, int threads)
+        [TestCase(5, 1)]
+        [TestCase(1, 5)]
+        public void StartSleepSequentialTest(double sleepSeconds, int threads)
         {
             //-- Arrange
             var example = new Example();
-            var stopwatch = new Stopwatch();
-            var expectedSeconds = sleepSeconds * threads;
+
+            var expectedMilliseconds = sleepSeconds * threads * 1000;
+            var expectedRun = threads;
+            var expectedRequest = threads;
+            var expectedTotal = sleepSeconds * threads;
+
+            //-- Act
+            example.RunTimer.Start();
+            var actualTotal = example.StartSleepSequential(sleepSeconds, threads);
+            example.RunTimer.Stop();
+
+            var actualMilliseconds = example.RunTimer.Elapsed.TotalMilliseconds;
+            var actualRun = example.ThreadsRun;
+            var actualRequest = example.ThreadsRequested;
+
+            //-- Assert
+            Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
+            Assert.AreEqual(expectedTotal, actualTotal);
+            Assert.AreEqual(expectedRun, actualRun);
+            Assert.AreEqual(expectedRequest, actualRequest);
+        }
+        [TestCase(5, 10)]
+        [TestCase(20, 5)]
+        public void ThreadSleepAsyncTestAsync(double sleepSeconds, int threads)
+        {
+            //-- Arrange
+            var example = new Example();
+
+            var expectedMilliseconds = sleepSeconds * 1000;
+            var expectedRequest = threads;
             var expectedRun = threads;
             var expectedTotal = sleepSeconds * threads;
 
             //-- Act
-            var actualTotal = 0;
-            stopwatch.Start();
-            actualTotal += example.StartSleepSequential(sleepSeconds, threads);
-            stopwatch.Stop();
-            var actualSeconds = stopwatch.Elapsed.Seconds;
+            example.RunTimer.Start();
+            var actualTotal = example.ThreadSleepAsync(sleepSeconds, threads).GetAwaiter().GetResult();
+            example.RunTimer.Stop();
+
+            var actualMilliseconds = example.RunTimer.Elapsed.TotalMilliseconds;
             var actualRun = example.ThreadsRun;
-            var actualRequested = example.ThreadsRequested;
+            var actualRequest = example.ThreadsRequested;
 
             //-- Assert
-            Assert.AreEqual(expectedSeconds, actualSeconds);
+            System.Console.WriteLine(example.ToString());
+            Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
             Assert.AreEqual(expectedTotal, actualTotal);
-            Assert.AreEqual(expectedRun, actualRun);
-            Assert.AreEqual(expectedRun, actualRequested);
+            //-- Maybe I don't care if it knows it's internal state?
+            // double delta = 1 + threads / 2d;
+            // Assert.AreEqual(expectedRun, actualRun, delta);
+            // Assert.AreEqual(expectedRequest, actualRequest, delta);
         }
-        [TestCase(1, 1)]
-        [TestCase(1, 2)]
-        [TestCase(2, 2)]
-        public async Task ThreadSleepAsyncTestAsync(int sleepSeconds, int threads)
+        [TestCase(5, 1)]
+        [TestCase(1, 5)]
+        public void BackgroundThreadSleepAsyncTestAsync(double sleepSeconds, int threads)
         {
             //-- Arrange
             var example = new Example();
-            var stopwatch = new Stopwatch();
-            var expectedSeconds = sleepSeconds;
-            var expectedRun = threads;
-            var expectedTotal = sleepSeconds * threads;
-
-            //-- Act
-
-            stopwatch.Start();
-            int actualTotal = await example.ThreadSleepAsync(sleepSeconds, threads);
-            stopwatch.Stop();
-            var actualSeconds = stopwatch.Elapsed.Seconds;
-            var actualRun = example.ThreadsRun;
-            var actualRequested = example.ThreadsRequested;
-
-
-            //-- Assert
-            Assert.AreEqual(expectedSeconds, actualSeconds);
-            Assert.AreEqual(expectedTotal, actualTotal);
-            Assert.AreEqual(expectedRun, actualRun);
-            Assert.AreEqual(expectedRun, actualRequested);
-        }
-        [TestCase(1, 1)]
-        [TestCase(1, 2)]
-        [TestCase(2, 2)]
-        public void BackgroundThreadSleepAsyncTestAsync(int sleepSeconds, int threads)
-        {
-            //-- Arrange
-            var example = new Example();
-            var stopwatch = new Stopwatch();
-            var expectedSeconds = 0;
+            var expectedMilliseconds = 0;
             var expectedRun = 0;
+            var expectedRequest = 0;
 
             //-- Act
-            stopwatch.Start();
-            example.BackgroundThreadSleepAsync(sleepSeconds, threads);
-            stopwatch.Stop();
-            var actualSeconds = stopwatch.Elapsed.Seconds;
+            example.RunTimer.Start();
+            example.ThreadSleepAsync(sleepSeconds, threads);
+            example.RunTimer.Stop();
+
+            var actualMilliseconds = example.RunTimer.Elapsed.TotalMilliseconds;
             var actualRun = example.ThreadsRun;
-            var actualRequested = example.ThreadsRequested;
+            var actualRequest = example.ThreadsRequested;
 
             //-- Assert
-            Assert.AreEqual(expectedSeconds, actualSeconds);
-            Assert.AreEqual(expectedRun, actualRun);
-            Assert.AreEqual(expectedRun, actualRequested);
-        }
-    
-        public void BackgroundThreadSleepAsyncTestAwait(int sleepSeconds, int threads)
-        {
-            //-- Arrange
-            var example = new Example();
-            var stopwatch = new Stopwatch();
-            var expectedSeconds = sleepSeconds;
-            var expectedRun = threads;
-
-            //-- Act
-            stopwatch.Start();
-            example.BackgroundThreadSleepAsync(sleepSeconds, threads);
-            var i = 0;
-            // do
-            // {
-            //     i++;
-            // } while (example.Running||example.ThreadsRequested==0);
-            System.Console.WriteLine(i);
-            stopwatch.Stop();
-            var actualSeconds = stopwatch.Elapsed.Seconds;
-            var actualRun = example.ThreadsRun;
-            var actualRequested = example.ThreadsRequested;
-
-            //-- Assert
-            Assert.AreEqual(expectedSeconds, actualSeconds);
-            Assert.AreEqual(expectedRun, actualRun);
-            Assert.AreEqual(expectedRun, actualRequested);
+            Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
+            // double delta = 1 + threads / 2d;
+            // Assert.AreEqual(expectedRequest, actualRequest, delta);
+            // Assert.AreEqual(expectedRun, actualRun, 1);
         }
     }
 }
