@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,53 +9,54 @@ namespace AsyncExample
     {
         int threadsRun;
         int threadsRequested;
-        public int ThreadsRun { get => threadsRun; private set => threadsRun = value; }
-        public int ThreadsRequested { get => threadsRequested; private set => threadsRequested = value; }
-        public bool Running { get { return ((ThreadsRequested - ThreadsRun) > 0); } }
-        public int StartSleep(int sleepSeconds)
+        private Stopwatch runTimer;
+
+        public int ThreadsRun
         {
-            ThreadsRequested += sleepSeconds;
-            Thread.Sleep(sleepSeconds * 1000);
+            get => threadsRun; private set
+            {
+                threadsRun = value;
+                System.Console.WriteLine($"{ThreadsRun} Thread Done");
+            }
+        }
+        public int ThreadsRequested { get => threadsRequested; private set => threadsRequested = value; }
+        public Stopwatch RunTimer { get => runTimer; private set => runTimer = value; }
+        public bool Running { get { return ((ThreadsRequested - ThreadsRun) != 0); } }
+        public Example()
+        {
+            RunTimer = new Stopwatch();
+        }
+        public async Task<double> StartSleep(double sleepSeconds)
+        {
+            ThreadsRequested += 1;
+            var sleepMilliseconds = (int)(sleepSeconds * 1000);
+            await Task.Delay(sleepMilliseconds);
             ThreadsRun += 1;
             return sleepSeconds;
         }
-        public int StartSleepSequential(int sleepSeconds, int threads)
+        public double StartSleepSequential(double sleepSeconds, int threads)
         {
-            var ret = 0;
+            var ret = 0d;
             for (int i = 1; i <= threads; i++)
             {
-                ret += StartSleep(sleepSeconds);
+                ret += StartSleep(sleepSeconds).GetAwaiter().GetResult();
             }
             return ret;
         }
-        public async Task<int> StartSleepAsync(int sleepSeconds)
+        public async Task<double> ThreadSleepAsync(double sleepSeconds, int threads)
         {
-            return await Task.Run(() => StartSleep(sleepSeconds));
-        }
-
-        public async Task<int> ThreadSleepAsync(int sleepSeconds, int threads)
-        {
-            var threadResultArray = new Task<int>[threads];
+            var threadResultArray = new Task<double>[threads];
             for (int i = 0; i < threads; i++)
             {
                 threadResultArray[i] = Task.Run(() => StartSleep(sleepSeconds));
             }
-            var totalResults = 0;
-
+            var totalResults = 0d;
             foreach (var total in threadResultArray)
             {
                 totalResults += await total;
             }
             return totalResults;
         }
-
-        public async void BackgroundThreadSleepAsync(int sleepSeconds, int threads)
-        {
-            var x = 0;
-            for (int i = 0; i < threads; i++)
-            {
-                x += await Task.Run(() => StartSleep(sleepSeconds));
-            }
-        }
+        public override string ToString() => string.Format("REQ {0}, RUN {1}", threadsRequested, threadsRun);
     }
 }
