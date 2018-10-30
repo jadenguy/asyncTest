@@ -57,63 +57,39 @@ namespace AsyncExample.Tests
             Assert.AreEqual(expectedRun, actualRun);
             Assert.AreEqual(expectedRequest, actualRequest);
         }
-        [TestCase(5, 10)]
-        [TestCase(20, 5)]
+        [TestCase(5, 20)]
+        [TestCase(10, 5)]
         public void ThreadSleepAsyncTestAsync(double sleepSeconds, int threads)
         {
             //-- Arrange
             var sleeper = new Sleeper();
 
-            var expectedMilliseconds = sleepSeconds * 1000;
+            var expectedPreWaitMilliseconds = 0;
+            var expectedPostWaitMilliseconds = sleepSeconds * 1000;
             var expectedRequest = threads;
             var expectedRun = threads;
             var expectedTotal = sleepSeconds * threads;
 
             //-- Act
             sleeper.RunTimer.Start();
-            var actualTotal = sleeper.ThreadSleepAsync(sleepSeconds, threads).GetAwaiter().GetResult();
+            var actualAsync = sleeper.ThreadSleepAsync(sleepSeconds, threads);
+            var actualPreWaitMilliseconds = sleeper.RunTimer.Elapsed.TotalMilliseconds;
+            var actualTotal = actualAsync.GetAwaiter().GetResult();
+            var actualPostWaitMilliseconds = sleeper.RunTimer.Elapsed.TotalMilliseconds;
             sleeper.RunTimer.Stop();
-
-            var actualMilliseconds = sleeper.RunTimer.Elapsed.TotalMilliseconds;
             var actualRun = sleeper.ThreadsRun;
             var actualRequest = sleeper.ThreadsRequested;
 
             //-- Assert
             System.Console.WriteLine(sleeper.ToString());
-            Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
+            Assert.AreEqual(expectedPreWaitMilliseconds, actualPreWaitMilliseconds, 100);
+            Assert.AreEqual(expectedPostWaitMilliseconds, actualPostWaitMilliseconds, 100);
             Assert.AreEqual(expectedTotal, actualTotal);
             //-- Maybe I don't care if it knows it's internal state?
             //-- Randomly say you can under half plus one threads into the request by the time we check, due to how fast this works
             // double delta = 1 + threads / 2d;
             // Assert.AreEqual(expectedRun, actualRun, delta);
             // Assert.AreEqual(expectedRequest, actualRequest, delta);
-        }
-        [TestCase(5, 1)]
-        [TestCase(1, 5)]
-        public void BackgroundThreadSleepAsyncTestAsync(double sleepSeconds, int threads)
-        {
-            //-- Arrange
-            var sleeper = new Sleeper();
-            var expectedMilliseconds = 0;
-            var expectedRun = 0;
-            var expectedRequest = 0;
-
-            //-- Act
-            sleeper.RunTimer.Start();
-            sleeper.ThreadSleepAsync(sleepSeconds, threads);
-            sleeper.RunTimer.Stop();
-
-            var actualMilliseconds = sleeper.RunTimer.Elapsed.TotalMilliseconds;
-            var actualRun = sleeper.ThreadsRun;
-            var actualRequest = sleeper.ThreadsRequested;
-
-            //-- Assert
-            Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
-            //-- Maybe I don't care if it knows it's internal state?
-            //-- Randomly say you can be up to half plus one threads into the request by the time we check, due to how fast this works
-            // double delta = 1 + threads / 2d; 
-            // Assert.AreEqual(expectedRequest, actualRequest, delta);
-            // Assert.AreEqual(expectedRun, actualRun, 1);
         }
     }
 }
