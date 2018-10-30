@@ -83,6 +83,7 @@ namespace AsyncExample.Tests
             Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
             Assert.AreEqual(expectedTotal, actualTotal);
             //-- Maybe I don't care if it knows it's internal state?
+            //-- Randomly say you can under half plus one threads into the request by the time we check, due to how fast this works
             // double delta = 1 + threads / 2d;
             // Assert.AreEqual(expectedRun, actualRun, delta);
             // Assert.AreEqual(expectedRequest, actualRequest, delta);
@@ -108,7 +109,9 @@ namespace AsyncExample.Tests
 
             //-- Assert
             Assert.AreEqual(expectedMilliseconds, actualMilliseconds, 100);
-            // double delta = 1 + threads / 2d;
+            //-- Maybe I don't care if it knows it's internal state?
+            //-- Randomly say you can be up to half plus one threads into the request by the time we check, due to how fast this works
+            // double delta = 1 + threads / 2d; 
             // Assert.AreEqual(expectedRequest, actualRequest, delta);
             // Assert.AreEqual(expectedRun, actualRun, 1);
         }
